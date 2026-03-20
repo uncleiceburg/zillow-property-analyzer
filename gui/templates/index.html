@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zillow Property Analyzer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+            min-height: 100vh;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* Header */
+        header {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%);
+            color: white;
+            padding: 30px 0;
+            margin-bottom: 40px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        header h1 {
+            font-size: 2.2rem;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        
+        header p {
+            text-align: center;
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+        
+        /* Card styling */
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        }
+        
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .card-header h2 {
+            color: #1e3a5f;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+        
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #2d5a87 0%, #4a90c2 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 14px;
+            color: white;
+            font-size: 1.2rem;
+        }
+        
+        /* Input section */
+        .input-section {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        
+        .input-section h2 {
+            color: #1e3a5f;
+            margin-bottom: 12px;
+            font-size: 1.5rem;
+        }
+        
+        .input-section p {
+            color: #666;
+            margin-bottom: 24px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 12px;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        
+        input[type="text"] {
+            flex: 1;
+            padding: 16px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #2d5a87;
+            box-shadow: 0 0 0 4px rgba(45, 90, 135, 0.1);
+        }
+        
+        .btn {
+            padding: 16px 32px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #2d5a87 0%, #4a90c2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(45, 90, 135, 0.3);
+        }
+        
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .btn-loading {
+            position: relative;
+        }
+        
+        .btn-loading::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 2px solid transparent;
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-left: 10px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Results section */
+        #results {
+            display: none;
+        }
+        
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 24px;
+        }
+        
+        /* Property details */
+        .property-address {
+            font-size: 1.4rem;
+            color: #1e3a5f;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .property-location {
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .property-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-box {
+            background: #f8f9fa;
+            padding: 16px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1e3a5f;
+        }
+        
+        .stat-label {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 4px;
+        }
+        
+        .property-description {
+            margin-top: 16px;
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            color: #555;
+        }
+        
+        .features-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        
+        .feature-tag {
+            background: #e8f4fc;
+            color: #2d5a87;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+        
+        /* Appraisal highlight */
+        .appraisal-highlight {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%);
+            color: white;
+            text-align: center;
+            padding: 32px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+        }
+        
+        .appraisal-value {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .appraisal-range {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-bottom: 16px;
+        }
+        
+        .appraisal-methods {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .method-box {
+            background: rgba(255,255,255,0.1);
+            padding: 16px;
+            border-radius: 8px;
+        }
+        
+        .method-label {
+            font-size: 0.85rem;
+            opacity: 0.8;
+            margin-bottom: 4px;
+        }
+        
+        .method-value {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        
+        /* Comparable properties */
+        .comparable-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+        
+        .comparable-table th {
+            background: #f8f9fa;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #1e3a5f;
+            font-size: 0.9rem;
+        }
+        
+        .comparable-table td {
+            padding: 12px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.95rem;
+        }
+        
+        .comparable-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        /* Upgrade list */
+        .upgrade-item {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            transition: transform 0.2s;
+        }
+        
+        .upgrade-item:hover {
+            transform: translateX(4px);
+        }
+        
+        .upgrade-rank {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #2d5a87 0%, #4a90c2 100%);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            margin-right: 16px;
+            flex-shrink: 0;
+        }
+        
+        .upgrade-info {
+            flex: 1;
+        }
+        
+        .upgrade-name {
+            font-weight: 600;
+            color: #1e3a5f;
+            margin-bottom: 4px;
+        }
+        
+        .upgrade-meta {
+            font-size: 0.85rem;
+            color: #666;
+        }
+        
+        .upgrade-cost {
+            text-align: right;
+            margin-right: 16px;
+        }
+        
+        .upgrade-cost-value {
+            font-weight: 700;
+            color: #1e3a5f;
+            font-size: 1.1rem;
+        }
+        
+        .upgrade-cost-label {
+            font-size: 0.75rem;
+            color: #666;
+        }
+        
+        .upgrade-roi {
+            text-align: center;
+            min-width: 80px;
+        }
+        
+        .roi-value {
+            font-weight: 700;
+            color: #2e7d32;
+            font-size: 1.1rem;
+        }
+        
+        .roi-label {
+            font-size: 0.75rem;
+            color: #666;
+        }
+        
+        .priority-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .priority-high {
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        .priority-medium {
+            background: #fff3e0;
+            color: #ef6c00;
+        }
+        
+        .priority-standard {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        /* Error message */
+        .error-message {
+            background: #ffebee;
+            border: 1px solid #ef5350;
+            color: #c62828;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .property-stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .appraisal-methods {
+                grid-template-columns: 1fr;
+            }
+            
+            .input-group {
+                flex-direction: column;
+            }
+            
+            .upgrade-item {
+                flex-wrap: wrap;
+            }
+            
+            .upgrade-roi {
+                margin-left: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Zillow Property Analyzer</h1>
+            <p>Appraisal estimates, comparable analysis, and upgrade recommendations</p>
+        </div>
+    </header>
+    
+    <main class="container">
+        <!-- Input Section -->
+        <div class="card input-section" id="input-section">
+            <h2>Analyze a Property</h2>
+            <p>Enter a Zillow property URL to get a complete analysis including appraisal estimate, comparable properties, and renovation recommendations.</p>
+            <div class="input-group">
+                <input type="text" id="url-input" placeholder="https://www.zillow.com/homedetails/..." />
+                <button class="btn btn-primary" id="analyze-btn" onclick="analyzeProperty()">Analyze Property</button>
+            </div>
+        </div>
+        
+        <!-- Error Section -->
+        <div class="card" id="error-section" style="display: none;">
+            <div class="error-message" id="error-message"></div>
+        </div>
+        
+        <!-- Results Section -->
+        <div id="results">
+            <!-- Property Details -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">&#127968;</div>
+                    <h2>Property Details</h2>
+                </div>
+                <div class="property-address" id="property-address"></div>
+                <div class="property-location" id="property-location"></div>
+                
+                <div class="property-stats">
+                    <div class="stat-box">
+                        <div class="stat-value" id="stat-beds">-</div>
+                        <div class="stat-label">Bedrooms</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="stat-baths">-</div>
+                        <div class="stat-label">Bathrooms</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="stat-sqft">-</div>
+                        <div class="stat-label">Sq Ft</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="stat-year">-</div>
+                        <div class="stat-label">Year Built</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="stat-type">-</div>
+                        <div class="stat-label">Type</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="stat-lot">-</div>
+                        <div class="stat-label">Lot Size</div>
+                    </div>
+                </div>
+                
+                <div class="property-description" id="property-description"></div>
+                
+                <div id="features-section" style="margin-top: 16px;">
+                    <strong>Features:</strong>
+                    <div class="features-list" id="features-list"></div>
+                </div>
+            </div>
+            
+            <!-- Appraisal Estimate -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">&#128200;</div>
+                    <h2>Appraisal Estimate</h2>
+                </div>
+                
+                <div class="appraisal-highlight">
+                    <div class="appraisal-value" id="appraisal-value">-</div>
+                    <div class="appraisal-range" id="appraisal-range">Confidence Range: -</div>
+                    <div class="appraisal-methods">
+                        <div class="method-box">
+                            <div class="method-label">Comparable Sales</div>
+                            <div class="method-value" id="method-comp">-</div>
+                        </div>
+                        <div class="method-box">
+                            <div class="method-label">Price Per Sq Ft</div>
+                            <div class="method-value" id="method-ppsf">-</div>
+                        </div>
+                        <div class="method-box">
+                            <div class="method-label">Adjusted Value</div>
+                            <div class="method-value" id="method-adj">-</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 20px;">
+                    <div class="stat-box">
+                        <div class="stat-label">Subject Price/Sq Ft</div>
+                        <div class="stat-value" id="subject-ppsf">-</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Comp Avg Price/Sq Ft</div>
+                        <div class="stat-value" id="comp-avg-ppsf">-</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Comparable Analysis -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">&#128270;</div>
+                    <h2>Comparable Properties</h2>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <strong>Market Analysis:</strong>
+                    <p style="color: #666; margin-top: 4px;">
+                        Price Range: <span id="comp-price-range">-</span> | 
+                        Median: <span id="comp-median">-</span> | 
+                        Average: <span id="comp-average">-</span> |
+                        Confidence: <span id="comp-confidence">-</span>
+                    </p>
+                </div>
+                
+                <table class="comparable-table">
+                    <thead>
+                        <tr>
+                            <th>Address</th>
+                            <th>Price</th>
+                            <th>Sq Ft</th>
+                            <th>$/Sq Ft</th>
+                            <th>Beds</th>
+                            <th>Baths</th>
+                            <th>Distance</th>
+                        </tr>
+                    </thead>
+                    <tbody id="comparables-tbody">
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Upgrade Recommendations -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">&#128161;</div>
+                    <h2>Recommended Upgrades</h2>
+                </div>
+                <p style="color: #666; margin-bottom: 20px;">
+                    Top renovation recommendations ranked by priority, cost, and return on investment.
+                </p>
+                <div id="upgrades-list"></div>
+            </div>
+        </div>
+    </main>
+    
+    <script>
+        async function analyzeProperty() {
+            const urlInput = document.getElementById('url-input');
+            const analyzeBtn = document.getElementById('analyze-btn');
+            const errorSection = document.getElementById('error-section');
+            const errorMessage = document.getElementById('error-message');
+            const resultsSection = document.getElementById('results');
+            
+            const url = urlInput.value.trim();
+            
+            if (!url) {
+                showError('Please enter a Zillow property URL.');
+                return;
+            }
+            
+            // Set loading state
+            analyzeBtn.disabled = true;
+            analyzeBtn.classList.add('btn-loading');
+            analyzeBtn.textContent = 'Analyzing';
+            errorSection.style.display = 'none';
+            
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ url })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Analysis failed');
+                }
+                
+                displayResults(data);
+                
+            } catch (error) {
+                showError(error.message || 'An unexpected error occurred. Please try again.');
+            } finally {
+                analyzeBtn.disabled = false;
+                analyzeBtn.classList.remove('btn-loading');
+                analyzeBtn.textContent = 'Analyze Property';
+            }
+        }
+        
+        function showError(message) {
+            const errorSection = document.getElementById('error-section');
+            const errorMessage = document.getElementById('error-message');
+            errorMessage.textContent = message;
+            errorSection.style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+        }
+        
+        function displayResults(data) {
+            document.getElementById('error-section').style.display = 'none';
+            document.getElementById('results').style.display = 'block';
+            
+            // Property Details
+            const prop = data.property;
+            document.getElementById('property-address').textContent = prop.address || 'N/A';
+            document.getElementById('property-location').textContent = 
+                `${prop.city || ''}, ${prop.state || ''} ${prop.zip || ''}`.trim() || 'N/A';
+            document.getElementById('stat-beds').textContent = prop.beds || '-';
+            document.getElementById('stat-baths').textContent = prop.baths || '-';
+            document.getElementById('stat-sqft').textContent = prop.sqft ? parseInt(prop.sqft).toLocaleString() : '-';
+            document.getElementById('stat-year').textContent = prop.year_built || '-';
+            document.getElementById('stat-type').textContent = prop.property_type || '-';
+            document.getElementById('stat-lot').textContent = prop.lot_size || '-';
+            
+            const desc = prop.description;
+            if (desc && desc.length > 200) {
+                document.getElementById('property-description').textContent = 
+                    desc.substring(0, 200) + '...';
+            } else {
+                document.getElementById('property-description').textContent = desc || 'No description available.';
+            }
+            
+            // Features
+            const featuresList = document.getElementById('features-list');
+            featuresList.innerHTML = '';
+            if (prop.features && prop.features.length > 0) {
+                prop.features.slice(0, 12).forEach(feature => {
+                    const tag = document.createElement('span');
+                    tag.className = 'feature-tag';
+                    tag.textContent = feature;
+                    featuresList.appendChild(tag);
+                });
+            } else {
+                document.getElementById('features-section').style.display = 'none';
+            }
+            
+            // Appraisal
+            const appraisal = data.appraisal;
+            document.getElementById('appraisal-value').textContent = appraisal.estimated_value;
+            document.getElementById('appraisal-range').textContent = 
+                `Confidence Range: ${appraisal.confidence_low} - ${appraisal.confidence_high}`;
+            document.getElementById('method-comp').textContent = appraisal.comparable_value;
+            document.getElementById('method-ppsf').textContent = appraisal.ppsf_value;
+            document.getElementById('method-adj').textContent = appraisal.adjusted_value;
+            document.getElementById('subject-ppsf').textContent = appraisal.price_per_sqft;
+            document.getElementById('comp-avg-ppsf').textContent = appraisal.comp_avg_ppsf;
+            
+            // Comparables
+            const comps = data.comparables;
+            document.getElementById('comp-price-range').textContent = comps.price_range || '-';
+            document.getElementById('comp-median').textContent = comps.median_price || '-';
+            document.getElementById('comp-average').textContent = comps.average_price || '-';
+            document.getElementById('comp-confidence').textContent = comps.confidence_level || '-';
+            
+            const tbody = document.getElementById('comparables-tbody');
+            tbody.innerHTML = '';
+            comps.comparables.forEach(comp => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${comp.address}</td>
+                    <td>${comp.price}</td>
+                    <td>${comp.sqft}</td>
+                    <td>${comp.price_per_sqft}</td>
+                    <td>${comp.bedrooms}</td>
+                    <td>${comp.bathrooms}</td>
+                    <td>${comp.distance}</td>
+                `;
+                tbody.appendChild(row);
+            });
+            
+            // Upgrades
+            const upgradesList = document.getElementById('upgrades-list');
+            upgradesList.innerHTML = '';
+            data.upgrades.forEach((upgrade, index) => {
+                const priorityClass = upgrade.regional_priority === 1 ? 'priority-high' :
+                                      upgrade.regional_priority === 2 ? 'priority-medium' : 'priority-standard';
+                
+                const item = document.createElement('div');
+                item.className = 'upgrade-item';
+                item.innerHTML = `
+                    <div class="upgrade-rank">${index + 1}</div>
+                    <div class="upgrade-info">
+                        <div class="upgrade-name">${upgrade.name}</div>
+                        <div class="upgrade-meta">
+                            <span class="priority-badge ${priorityClass}">${upgrade.priority_label}</span>
+                            <span style="margin-left: 8px;">Value Recovery: ${upgrade.value_recovery}</span>
+                        </div>
+                    </div>
+                    <div class="upgrade-cost">
+                        <div class="upgrade-cost-value">${upgrade.estimated_cost}</div>
+                        <div class="upgrade-cost-label">Est. Cost</div>
+                    </div>
+                    <div class="upgrade-roi">
+                        <div class="roi-value">${upgrade.roi}</div>
+                        <div class="roi-label">ROI</div>
+                    </div>
+                `;
+                upgradesList.appendChild(item);
+            });
+            
+            // Scroll to results
+            document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // Allow Enter key to submit
+        document.getElementById('url-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                analyzeProperty();
+            }
+        });
+    </script>
+</body>
+</html>

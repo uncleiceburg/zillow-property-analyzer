@@ -65,6 +65,37 @@ python3 comparable_analyzer.py
 python3 appraisal_engine.py
 ```
 
+## GUI Usage
+
+A web-based graphical interface is available for easier use.
+
+### Installation
+
+```bash
+pip install -r requirements_gui.txt
+```
+
+### Running the GUI
+
+```bash
+cd gui
+python app.py
+```
+
+Then open your browser and navigate to `http://localhost:5000`
+
+### GUI Features
+
+- Clean, modern web interface
+- Single-page property analysis
+- Input a Zillow URL to run the full 3-stage pipeline
+- Results displayed in organized sections:
+  - Property Details
+  - Comparable Analysis
+  - Appraisal Estimate with confidence range
+  - Ranked upgrade recommendations with cost and ROI
+- Responsive design for desktop and mobile
+
 ## Disclaimer
 
 Scraping Zillow may violate their Terms of Service. This tool is for educational and research purposes. For production use, consider Zillow's official API or obtain proper licensing.
